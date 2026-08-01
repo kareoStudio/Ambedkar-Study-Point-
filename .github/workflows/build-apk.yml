@@ -55,7 +55,7 @@ jobs:
           npx cap sync android
 
       # ============================================
-      # STEP 7: Generate Icons + Splash Screen
+      # STEP 7: Generate Adaptive Icons + Splash
       # ============================================
       - name: 🎨 Generate Icons & Splash Screen
         run: |
@@ -64,17 +64,43 @@ jobs:
           ICON_SRC="src/assets/icon/icon.png"
           
           if [ -f "$ICON_SRC" ]; then
-            echo "✅ Icon found! Generating all assets..."
+            echo "✅ Icon found! Generating adaptive icons..."
             
-            # ====== LAUNCHER ICONS ======
+            # ====== CREATE DIRECTORIES ======
             mkdir -p android/app/src/main/res/mipmap-ldpi
             mkdir -p android/app/src/main/res/mipmap-mdpi
             mkdir -p android/app/src/main/res/mipmap-hdpi
             mkdir -p android/app/src/main/res/mipmap-xhdpi
             mkdir -p android/app/src/main/res/mipmap-xxhdpi
             mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+            mkdir -p android/app/src/main/res/mipmap-anydpi-v26
             
-            # Normal icons
+            # ====== FOREGROUND ICONS (Adaptive) ======
+            # LDPI - 36x36
+            convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher_foreground.png
+            convert -size 36x36 xc:'#ffffff' android/app/src/main/res/mipmap-ldpi/ic_launcher_background.png
+            
+            # MDPI - 48x48
+            convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+            convert -size 48x48 xc:'#ffffff' android/app/src/main/res/mipmap-mdpi/ic_launcher_background.png
+            
+            # HDPI - 72x72
+            convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+            convert -size 72x72 xc:'#ffffff' android/app/src/main/res/mipmap-hdpi/ic_launcher_background.png
+            
+            # XHDPI - 96x96
+            convert "$ICON_SRC" -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+            convert -size 96x96 xc:'#ffffff' android/app/src/main/res/mipmap-xhdpi/ic_launcher_background.png
+            
+            # XXHDPI - 144x144
+            convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+            convert -size 144x144 xc:'#ffffff' android/app/src/main/res/mipmap-xxhdpi/ic_launcher_background.png
+            
+            # XXXHDPI - 192x192
+            convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+            convert -size 192x192 xc:'#ffffff' android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png
+            
+            # ====== LEGACY ICONS (Normal + Round) ======
             convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher.png
             convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -82,13 +108,29 @@ jobs:
             convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
             
-            # Round icons
             convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+            
+            # ====== ADAPTIVE ICON XML ======
+            cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml << 'EOF'
+            <?xml version="1.0" encoding="utf-8"?>
+            <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+                <background android:drawable="@mipmap/ic_launcher_background"/>
+                <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+            </adaptive-icon>
+            EOF
+            
+            cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml << 'EOF'
+            <?xml version="1.0" encoding="utf-8"?>
+            <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+                <background android:drawable="@mipmap/ic_launcher_background"/>
+                <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+            </adaptive-icon>
+            EOF
             
             # ====== SPLASH SCREEN WITH ICON ======
             mkdir -p android/app/src/main/res/drawable-ldpi
@@ -100,43 +142,43 @@ jobs:
             
             # LDPI - 320x480
             convert -size 320x480 xc:'#ffffff' /tmp/bg_ldpi.png
-            convert "$ICON_SRC" -resize 72x72 /tmp/ic_ldpi.png
+            convert "$ICON_SRC" -resize 96x96 /tmp/ic_ldpi.png
             convert /tmp/bg_ldpi.png /tmp/ic_ldpi.png -gravity center -composite android/app/src/main/res/drawable-ldpi/splash_screen.png
             
             # MDPI - 480x800
             convert -size 480x800 xc:'#ffffff' /tmp/bg_mdpi.png
-            convert "$ICON_SRC" -resize 96x96 /tmp/ic_mdpi.png
+            convert "$ICON_SRC" -resize 128x128 /tmp/ic_mdpi.png
             convert /tmp/bg_mdpi.png /tmp/ic_mdpi.png -gravity center -composite android/app/src/main/res/drawable-mdpi/splash_screen.png
             
             # HDPI - 720x1280
             convert -size 720x1280 xc:'#ffffff' /tmp/bg_hdpi.png
-            convert "$ICON_SRC" -resize 144x144 /tmp/ic_hdpi.png
+            convert "$ICON_SRC" -resize 192x192 /tmp/ic_hdpi.png
             convert /tmp/bg_hdpi.png /tmp/ic_hdpi.png -gravity center -composite android/app/src/main/res/drawable-hdpi/splash_screen.png
             
             # XHDPI - 960x1600
             convert -size 960x1600 xc:'#ffffff' /tmp/bg_xhdpi.png
-            convert "$ICON_SRC" -resize 192x192 /tmp/ic_xhdpi.png
+            convert "$ICON_SRC" -resize 256x256 /tmp/ic_xhdpi.png
             convert /tmp/bg_xhdpi.png /tmp/ic_xhdpi.png -gravity center -composite android/app/src/main/res/drawable-xhdpi/splash_screen.png
             
             # XXHDPI - 1440x2560
             convert -size 1440x2560 xc:'#ffffff' /tmp/bg_xxhdpi.png
-            convert "$ICON_SRC" -resize 288x288 /tmp/ic_xxhdpi.png
+            convert "$ICON_SRC" -resize 384x384 /tmp/ic_xxhdpi.png
             convert /tmp/bg_xxhdpi.png /tmp/ic_xxhdpi.png -gravity center -composite android/app/src/main/res/drawable-xxhdpi/splash_screen.png
             
             # XXXHDPI - 1920x3200
             convert -size 1920x3200 xc:'#ffffff' /tmp/bg_xxxhdpi.png
-            convert "$ICON_SRC" -resize 384x384 /tmp/ic_xxxhdpi.png
+            convert "$ICON_SRC" -resize 512x512 /tmp/ic_xxxhdpi.png
             convert /tmp/bg_xxxhdpi.png /tmp/ic_xxxhdpi.png -gravity center -composite android/app/src/main/res/drawable-xxxhdpi/splash_screen.png
             
-            echo "✅ Icons & Splash Screen generated!"
+            echo "✅ All icons & splash screen generated!"
           else
             echo "⚠️ No icon.png found in src/assets/icon/"
           fi
 
       # ============================================
-      # STEP 8: Fix Theme (Splash Screen + Icon)
+      # STEP 8: Fix Theme with Splash Screen
       # ============================================
-      - name: 🎨 Fix Theme with Splash Screen
+      - name: 🎨 Fix Theme
         run: |
           mkdir -p android/app/src/main/res/values
           
