@@ -1,0 +1,143 @@
+name: 🚀 Build अम्बेडकर Study Point Debug APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ============================================
+      # STEP 1: Code Checkout
+      # ============================================
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # ============================================
+      # STEP 2: Setup Node.js
+      # ============================================
+      - name: ⚡ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ============================================
+      # STEP 3: Setup Java (Android ke liye)
+      # ============================================
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # ============================================
+      # STEP 4: Install Dependencies
+      # ============================================
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # ============================================
+      # STEP 5: Build Angular App
+      # ============================================
+      - name: 🏗️ Build Web App
+        run: npm run build -- --configuration production
+
+      # ============================================
+      # STEP 6: Add Android Platform (Capacitor)
+      # ============================================
+      - name: 🤖 Add Capacitor Android
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      # ============================================
+      # STEP 7: Generate App Icons (Auto)
+      # ============================================
+      - name: 🎨 Generate Android Icons
+        run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
+          
+          ICON_SRC="src/assets/icon/icon.png"
+          
+          if [ -f "$ICON_SRC" ]; then
+            echo "✅ Icon found! Generating Android icons..."
+            
+            mkdir -p android/app/src/main/res/mipmap-ldpi
+            mkdir -p android/app/src/main/res/mipmap-mdpi
+            mkdir -p android/app/src/main/res/mipmap-hdpi
+            mkdir -p android/app/src/main/res/mipmap-xhdpi
+            mkdir -p android/app/src/main/res/mipmap-xxhdpi
+            mkdir -p android/app/src/main/res/mipmap-xxxhdpi
+            
+            convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher.png
+            convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
+            convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
+            convert "$ICON_SRC" -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+            
+            convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher_round.png
+            convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+            convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+            convert "$ICON_SRC" -resize 96x96 android/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+            convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+            convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+            
+            echo "✅ Icons generated!"
+          else
+            echo "⚠️ No icon.png found. Using default icons."
+          fi
+
+      # ============================================
+      # STEP 8: Remove Splash Screen
+      # ============================================
+      - name: 🚫 Remove Splash Screen
+        run: |
+          mkdir -p android/app/src/main/res/values
+          
+          cat > android/app/src/main/res/values/styles.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="windowActionBar">false</item>
+                  <item name="windowNoTitle">true</item>
+                  <item name="android:background">@null</item>
+              </style>
+              <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
+                  <item name="android:background">@android:color/transparent</item>
+                  <item name="android:windowIsTranslucent">true</item>
+              </style>
+          </resources>
+          EOF
+          
+          cat > android/app/src/main/res/values/colors.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#ffffff</color>
+              <color name="colorPrimaryDark">#ffffff</color>
+              <color name="colorAccent">#ffffff</color>
+          </resources>
+          EOF
+
+      # ============================================
+      # STEP 9: Build Debug APK
+      # ============================================
+      - name: 🔨 Build Debug APK
+        working-directory: ./android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      # ============================================
+      # STEP 10: Upload Debug APK
+      # ============================================
+      - name: 📤 Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: अम्बेडकर-Study-Point-Debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
