@@ -1,7 +1,24 @@
 <ion-content [fullscreen]="true">
+  
+  <!-- 🔥 ONLINE MODE - Website Load -->
   <iframe 
+    *ngIf="isOnline"
     [src]="safeUrl" 
     allow="camera; microphone; geolocation; fullscreen"
     sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads">
   </iframe>
+
+  <!-- 🔥 OFFLINE MODE - Custom Page -->
+  <div *ngIf="!isOnline" class="offline-container">
+    <div class="offline-content">
+      <div class="offline-icon">📡</div>
+      <h1>Offline</h1>
+      <p>Internet connection nahi mil raha hai</p>
+      <p class="sub-text">Kripaya apna Wi-Fi ya Mobile Data check karein</p>
+      <button (click)="retryConnection()" class="retry-btn">
+        🔄 Retry
+      </button>
+    </div>
+  </div>
+
 </ion-content>
