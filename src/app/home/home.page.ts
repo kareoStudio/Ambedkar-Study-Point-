@@ -9,17 +9,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class HomePage {
   safeUrl: SafeResourceUrl;
-  isOnline: boolean = true;
+  isOnline: boolean = navigator.onLine;
   websiteUrl: string = 'https://study-app-8e257.firebaseapp.com/';
 
   constructor(private sanitizer: DomSanitizer) {
-    this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.websiteUrl);
-    this.checkNetwork();
+    this.loadUrl();
     
-    // Network status listener
     window.addEventListener('online', () => {
       this.isOnline = true;
-      this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.websiteUrl);
+      this.loadUrl();
     });
     
     window.addEventListener('offline', () => {
@@ -27,14 +25,14 @@ export class HomePage {
     });
   }
 
-  checkNetwork() {
-    this.isOnline = navigator.onLine;
+  loadUrl() {
+    this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.websiteUrl);
   }
 
-  retryConnection() {
-    this.checkNetwork();
+  retry() {
+    this.isOnline = navigator.onLine;
     if (this.isOnline) {
-      this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.websiteUrl);
+      this.loadUrl();
     }
   }
 }
