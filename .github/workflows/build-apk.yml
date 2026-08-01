@@ -18,13 +18,13 @@ jobs:
         uses: actions/checkout@v4
 
       # ============================================
-      # STEP 2: Setup Node.js
+      # STEP 2: Setup Node.js (NO CACHE)
       # ============================================
       - name: ⚡ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # cache: 'npm'  <-- HATA DIYA (lock file nahi hai)
 
       # ============================================
       # STEP 3: Setup Java (Android ke liye)
@@ -36,10 +36,10 @@ jobs:
           java-version: '17'
 
       # ============================================
-      # STEP 4: Install Dependencies
+      # STEP 4: Install Dependencies (npm install)
       # ============================================
       - name: 📦 Install dependencies
-        run: npm ci
+        run: npm install  # 🔥 npm ci ki jagah npm install
 
       # ============================================
       # STEP 5: Build Angular App
