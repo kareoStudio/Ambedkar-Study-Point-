@@ -1,0 +1,7 @@
+{
+  "name": "ambedkar-study-point",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
