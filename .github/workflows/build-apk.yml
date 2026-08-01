@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # cache: 'npm'  <-- HATA DIYA (lock file nahi hai)
 
       # ============================================
       # STEP 3: Setup Java (Android ke liye)
@@ -36,10 +35,10 @@ jobs:
           java-version: '17'
 
       # ============================================
-      # STEP 4: Install Dependencies (npm install)
+      # STEP 4: Install Dependencies
       # ============================================
       - name: 📦 Install dependencies
-        run: npm install  # 🔥 npm ci ki jagah npm install
+        run: npm install
 
       # ============================================
       # STEP 5: Build Angular App
@@ -94,20 +93,24 @@ jobs:
           fi
 
       # ============================================
-      # STEP 8: Remove Splash Screen
+      # STEP 8: Fix Theme + Remove Splash Screen
       # ============================================
-      - name: 🚫 Remove Splash Screen
+      - name: 🎨 Fix Theme & Remove Splash Screen
         run: |
           mkdir -p android/app/src/main/res/values
           
           cat > android/app/src/main/res/values/styles.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+              <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
                   <item name="windowActionBar">false</item>
                   <item name="windowNoTitle">true</item>
                   <item name="android:background">@null</item>
               </style>
+              
+              <style name="AppTheme.NoActionBar" parent="AppTheme">
+              </style>
+              
               <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
                   <item name="android:background">@android:color/transparent</item>
                   <item name="android:windowIsTranslucent">true</item>
