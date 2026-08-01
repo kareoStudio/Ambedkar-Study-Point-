@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       # ============================================
-      # STEP 2: Setup Node.js (NO CACHE)
+      # STEP 2: Setup Node.js
       # ============================================
       - name: ⚡ Setup Node.js
         uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
           node-version: '20'
 
       # ============================================
-      # STEP 3: Setup Java (Android ke liye)
+      # STEP 3: Setup Java
       # ============================================
       - name: ☕ Setup Java 17
         uses: actions/setup-java@v4
@@ -47,7 +47,7 @@ jobs:
         run: npm run build -- --configuration production
 
       # ============================================
-      # STEP 6: Add Android Platform (Capacitor)
+      # STEP 6: Add Capacitor Android
       # ============================================
       - name: 🤖 Add Capacitor Android
         run: |
@@ -55,17 +55,18 @@ jobs:
           npx cap sync android
 
       # ============================================
-      # STEP 7: Generate App Icons (Auto)
+      # STEP 7: Generate Icons + Splash Screen
       # ============================================
-      - name: 🎨 Generate Android Icons
+      - name: 🎨 Generate Icons & Splash Screen
         run: |
           sudo apt-get update && sudo apt-get install -y imagemagick
           
           ICON_SRC="src/assets/icon/icon.png"
           
           if [ -f "$ICON_SRC" ]; then
-            echo "✅ Icon found! Generating Android icons..."
+            echo "✅ Icon found! Generating all assets..."
             
+            # ====== LAUNCHER ICONS ======
             mkdir -p android/app/src/main/res/mipmap-ldpi
             mkdir -p android/app/src/main/res/mipmap-mdpi
             mkdir -p android/app/src/main/res/mipmap-hdpi
@@ -73,6 +74,7 @@ jobs:
             mkdir -p android/app/src/main/res/mipmap-xxhdpi
             mkdir -p android/app/src/main/res/mipmap-xxxhdpi
             
+            # Normal icons
             convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher.png
             convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -80,6 +82,7 @@ jobs:
             convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
             
+            # Round icons
             convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
@@ -87,15 +90,53 @@ jobs:
             convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
             convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
             
-            echo "✅ Icons generated!"
+            # ====== SPLASH SCREEN WITH ICON ======
+            mkdir -p android/app/src/main/res/drawable-ldpi
+            mkdir -p android/app/src/main/res/drawable-mdpi
+            mkdir -p android/app/src/main/res/drawable-hdpi
+            mkdir -p android/app/src/main/res/drawable-xhdpi
+            mkdir -p android/app/src/main/res/drawable-xxhdpi
+            mkdir -p android/app/src/main/res/drawable-xxxhdpi
+            
+            # LDPI - 320x480
+            convert -size 320x480 xc:'#ffffff' /tmp/bg_ldpi.png
+            convert "$ICON_SRC" -resize 72x72 /tmp/ic_ldpi.png
+            convert /tmp/bg_ldpi.png /tmp/ic_ldpi.png -gravity center -composite android/app/src/main/res/drawable-ldpi/splash_screen.png
+            
+            # MDPI - 480x800
+            convert -size 480x800 xc:'#ffffff' /tmp/bg_mdpi.png
+            convert "$ICON_SRC" -resize 96x96 /tmp/ic_mdpi.png
+            convert /tmp/bg_mdpi.png /tmp/ic_mdpi.png -gravity center -composite android/app/src/main/res/drawable-mdpi/splash_screen.png
+            
+            # HDPI - 720x1280
+            convert -size 720x1280 xc:'#ffffff' /tmp/bg_hdpi.png
+            convert "$ICON_SRC" -resize 144x144 /tmp/ic_hdpi.png
+            convert /tmp/bg_hdpi.png /tmp/ic_hdpi.png -gravity center -composite android/app/src/main/res/drawable-hdpi/splash_screen.png
+            
+            # XHDPI - 960x1600
+            convert -size 960x1600 xc:'#ffffff' /tmp/bg_xhdpi.png
+            convert "$ICON_SRC" -resize 192x192 /tmp/ic_xhdpi.png
+            convert /tmp/bg_xhdpi.png /tmp/ic_xhdpi.png -gravity center -composite android/app/src/main/res/drawable-xhdpi/splash_screen.png
+            
+            # XXHDPI - 1440x2560
+            convert -size 1440x2560 xc:'#ffffff' /tmp/bg_xxhdpi.png
+            convert "$ICON_SRC" -resize 288x288 /tmp/ic_xxhdpi.png
+            convert /tmp/bg_xxhdpi.png /tmp/ic_xxhdpi.png -gravity center -composite android/app/src/main/res/drawable-xxhdpi/splash_screen.png
+            
+            # XXXHDPI - 1920x3200
+            convert -size 1920x3200 xc:'#ffffff' /tmp/bg_xxxhdpi.png
+            convert "$ICON_SRC" -resize 384x384 /tmp/ic_xxxhdpi.png
+            convert /tmp/bg_xxxhdpi.png /tmp/ic_xxxhdpi.png -gravity center -composite android/app/src/main/res/drawable-xxxhdpi/splash_screen.png
+            
+            echo "✅ Icons & Splash Screen generated!"
           else
-            echo "⚠️ No icon.png found. Using default icons."
+            echo "⚠️ No icon.png found in src/assets/icon/"
           fi
 
       # ============================================
-      # STEP 8: Fix Theme + Remove Splash Screen
+      # STEP 8: Fix Theme (Splash Screen + Icon)
       # ============================================
-      - name: 🎨 Fix Theme & Remove Splash Screen
+      - name: 🎨 Fix Theme with Splash Screen
         run: |
           mkdir -p android/app/src/main/res/values
           
@@ -105,15 +146,13 @@ jobs:
               <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
                   <item name="windowActionBar">false</item>
                   <item name="windowNoTitle">true</item>
-                  <item name="android:background">@null</item>
               </style>
               
               <style name="AppTheme.NoActionBar" parent="AppTheme">
               </style>
               
               <style name="AppTheme.NoActionBarLaunch" parent="AppTheme.NoActionBar">
-                  <item name="android:background">@android:color/transparent</item>
-                  <item name="android:windowIsTranslucent">true</item>
+                  <item name="android:windowBackground">@drawable/splash_screen</item>
               </style>
           </resources>
           EOF
