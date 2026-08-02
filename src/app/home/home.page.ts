@@ -8,7 +8,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   standalone: false,
 })
 export class HomePage {
-  safeUrl: SafeResourceUrl;
+  safeUrl: SafeResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl('about:blank'); // 🔥 Initialize kiya
   isOnline: boolean = navigator.onLine;
   websiteUrl: string = 'https://study-app-8e257.firebaseapp.com/';
 
