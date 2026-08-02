@@ -36,25 +36,30 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: 🎨 Generate Icons & Splash
+      # ============================================
+      # 🔥 ICON FIX: Sync ke BAAD override karo
+      # ============================================
+      - name: 🎨 Fix App Icons
         run: |
           sudo apt-get update && sudo apt-get install -y imagemagick
           
           ICON_SRC="src/assets/icon/icon.png"
           
           if [ -f "$ICON_SRC" ]; then
-            echo "✅ Icon found!"
+            echo "✅ Icon found! Overriding Capacitor defaults..."
             
-            # Create directories
+            # Create all mipmap directories
             mkdir -p android/app/src/main/res/mipmap-ldpi
             mkdir -p android/app/src/main/res/mipmap-mdpi
             mkdir -p android/app/src/main/res/mipmap-hdpi
             mkdir -p android/app/src/main/res/mipmap-xhdpi
             mkdir -p android/app/src/main/res/mipmap-xxhdpi
             mkdir -p android/app/src/main/res/mipmap-xxxhdpi
-            mkdir -p android/app/src/main/res/drawable
             
-            # ====== LEGACY ICONS ONLY ======
+            # 🔥 DELETE adaptive icon XML (Samsung force karta hai)
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+            
+            # Generate LEGACY icons only
             convert "$ICON_SRC" -resize 36x36 android/app/src/main/res/mipmap-ldpi/ic_launcher.png
             convert "$ICON_SRC" -resize 48x48 android/app/src/main/res/mipmap-mdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 72x72 android/app/src/main/res/mipmap-hdpi/ic_launcher.png
@@ -62,7 +67,7 @@ jobs:
             convert "$ICON_SRC" -resize 144x144 android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
             convert "$ICON_SRC" -resize 192x192 android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
             
-            # Round icons (same image)
+            # Round icons (same image, no mask)
             cp android/app/src/main/res/mipmap-ldpi/ic_launcher.png android/app/src/main/res/mipmap-ldpi/ic_launcher_round.png
             cp android/app/src/main/res/mipmap-mdpi/ic_launcher.png android/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
             cp android/app/src/main/res/mipmap-hdpi/ic_launcher.png android/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
@@ -70,16 +75,36 @@ jobs:
             cp android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
             cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
             
-            # ====== SPLASH SCREEN (Single drawable) ======
-            convert -size 1080x1920 xc:'#ffffff' /tmp/bg.png
-            convert "$ICON_SRC" -resize 300x300 /tmp/ic.png
-            convert /tmp/bg.png /tmp/ic.png -gravity center -composite android/app/src/main/res/drawable/splash.png
+            # Also copy to drawable (backup)
+            mkdir -p android/app/src/main/res/drawable
+            cp android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png android/app/src/main/res/drawable/ic_launcher.png
             
-            echo "✅ Done!"
+            echo "✅ Icons overridden!"
           else
             echo "⚠️ No icon.png found"
           fi
 
+      # ============================================
+      # 🔥 SPLASH SCREEN FIX
+      # ============================================
+      - name: 🎨 Fix Splash Screen
+        run: |
+          ICON_SRC="src/assets/icon/icon.png"
+          
+          if [ -f "$ICON_SRC" ]; then
+            mkdir -p android/app/src/main/res/drawable
+            
+            # White background + centered icon
+            convert -size 1080x1920 xc:'#ffffff' /tmp/bg.png
+            convert "$ICON_SRC" -resize 350x350 /tmp/ic.png
+            convert /tmp/bg.png /tmp/ic.png -gravity center -composite android/app/src/main/res/drawable/splash.png
+            
+            echo "✅ Splash screen created!"
+          fi
+
+      # ============================================
+      # 🔥 THEME FIX
+      # ============================================
       - name: 🎨 Fix Theme
         run: |
           mkdir -p android/app/src/main/res/values
@@ -96,6 +121,16 @@ jobs:
           echo '        <item name="android:windowBackground">@drawable/splash</item>' >> android/app/src/main/res/values/styles.xml
           echo '    </style>' >> android/app/src/main/res/values/styles.xml
           echo '</resources>' >> android/app/src/main/res/values/styles.xml
+
+      # ============================================
+      # 🔥 ANDROID MANIFEST FIX (Ensure correct icon)
+      # ============================================
+      - name: 📝 Fix AndroidManifest
+        run: |
+          # Replace icon reference in AndroidManifest.xml
+          sed -i 's/android:icon=".*"/android:icon="@mipmap\/ic_launcher"/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:roundIcon=".*"/android:roundIcon="@mipmap\/ic_launcher_round"/g' android/app/src/main/AndroidManifest.xml
+          echo "✅ AndroidManifest fixed!"
 
       - name: 🔨 Build Debug APK
         working-directory: ./android
